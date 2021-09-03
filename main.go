@@ -27,7 +27,7 @@ import (
 
 // logentry holds a complete query entry from log file
 type logentry struct {
-	lines [9]string
+	lines [4095]string
 	pos   int
 }
 
@@ -439,6 +439,9 @@ func fileReader(wg *sync.WaitGroup, r io.Reader, lines chan<- logentry, count in
 			// Now if line does not end with a ';', this is a multiline query
 			// So we append to previous entry in slice
 			if foldnext {
+				if curline == -1 {
+					curline = 0
+				}
 				curentry.lines[curline] = strings.Join([]string{curentry.lines[curline], line}, " ")
 			} else {
 				curline++
@@ -496,7 +499,7 @@ func worker(wg *sync.WaitGroup, lines <-chan logentry, entries chan<- query) {
 				if err != nil {
 					splitted := strings.Split(line, " ")
 					if len(splitted) > 2 {
-						datetime := strings.Join(splitted, " ")
+						datetime := strings.Join(splitted[2:], " ")
 						qry.Time, err = time.Parse("060102 15:04:05", datetime)
 						if err != nil {
 							log.Errorf("worker: error parsing time '%s': %v", datetime, err)
